@@ -58,6 +58,18 @@ class Modifier
     'Avg Pos'
   ]
 
+  COMMISSIONS_VALUES = [
+    'Commission Value',
+    'ACCOUNT - Commission Value',
+    'CAMPAIGN - Commission Value',
+    'BRAND - Commission Value',
+    'BRAND+CATEGORY - Commission Value',
+    'ADGROUP - Commission Value',
+    'KEYWORD - Commission Value'
+  ]
+
+  NUMBER_OF_COMMISSIONS_VALUE = 'number of commissions'
+
   LINES_PER_FILE = 120000
 
   DEFAULT_READ_CSV_OPTIONS = { :col_sep => "\t", :headers => :first_row }
@@ -70,14 +82,7 @@ class Modifier
 
   def modify(latest_file)
 
-    file_name = "#{file}.sorted"
-    content_as_table = parse(latest_file)
-
-    sorted_content = get_sorted_content(content_as_table,'Clicks')
-
-    write(sorted_content, content_as_table.headers, file_name)
-
-    latest_file_enumerator = lazy_read(file_name)
+    latest_file_enumerator = generate_file_enumerator(latest_file)
 
     combiner = Combiner.new do |value|
       value[KEYWORD_UNIQUE_ID]
@@ -97,7 +102,7 @@ class Modifier
 
     done = false
     file_index = 0
-    file_name = lates_file.gsub('.txt', '')
+    file_name = latest_file.gsub('.txt', '')
     until done do
       CSV.open(file_name + "_#{file_index}.txt", "wb", DEFAUL_WRITE_CSV_OPTIONS ) do |csv|
         merged = merger.next
@@ -120,6 +125,17 @@ class Modifier
 
   private
 
+  def generate_file_enumerator(latest_file)
+    file_name = "#{file}.sorted"
+    content_as_table = parse(latest_file)
+
+    sorted_content = get_sorted_content(content_as_table,'Clicks')
+
+    write(sorted_content, content_as_table.headers, file_name)
+
+    return lazy_read(file_name)
+  end
+
   def combine(merged)
     result = []
     merged.each do |_, hash|
@@ -141,10 +157,12 @@ class Modifier
     FLOAT_VALUES.each do |key|
       hash[key] = hash[key][0].from_german_to_f.to_german_s
     end
-    ['number of commissions'].each do |key|
-      hash[key] = (@cancellation_factor * hash[key][0].from_german_to_f).to_german_s
-    end
-    ['Commission Value', 'ACCOUNT - Commission Value', 'CAMPAIGN - Commission Value', 'BRAND - Commission Value', 'BRAND+CATEGORY - Commission Value', 'ADGROUP - Commission Value', 'KEYWORD - Commission Value'].each do |key|
+
+    hash[NUMBER_OF_COMMISSIONS_VALUE] = (
+                  @cancellation_factor * hash[NUMBER_OF_COMMISSIONS_VALUE][0].from_german_to_f
+                ).to_german_s
+
+    COMMISSIONS_VALUES.each do |key|
       hash[key] = (@cancellation_factor * @saleamount_factor * hash[key][0].from_german_to_f).to_german_s
     end
     hash
