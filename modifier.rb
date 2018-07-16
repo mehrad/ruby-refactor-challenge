@@ -3,18 +3,6 @@ require File.expand_path('lib/modifier',File.dirname(__FILE__))
 require 'csv'
 require 'date'
 
-class String
-  def from_german_to_f
-    self.gsub(',', '.').to_f
-  end
-end
-
-class Float
-  def to_german_s
-    self.to_s.gsub('.', ',')
-  end
-end
-
 def get_latest_by_date(name)
   files = Dir["#{ ENV["HOME"] }/workspace/*#{name}*.txt"]
 
@@ -30,10 +18,8 @@ def get_latest_by_date(name)
   files.last
 end
 
-modified = input = get_latest_by_date('project_2012-07-27_2012-10-10_performancedata')
-modification_factor = 1
-cancellaction_factor = 0.4
-modifier = Modifier.new(modification_factor, cancellaction_factor)
-modifier.modify(modified, input)
+lates_file = get_latest_by_date('project_2012-07-27_2012-10-10_performancedata')
+modifier = Modifier.new(1, 0.4)
+modifier.modify(latest_file)
 
 puts "DONE modifying"

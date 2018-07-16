@@ -1,10 +1,62 @@
+class String
+  def from_german_to_f
+    self.gsub(',', '.').to_f
+  end
+end
+
+class Float
+  def to_german_s
+    self.to_s.gsub('.', ',')
+  end
+end
+
 class Modifier
 
   KEYWORD_UNIQUE_ID = 'Keyword Unique ID'
-  LAST_VALUE_WINS = ['Account ID', 'Account Name', 'Campaign', 'Ad Group', 'Keyword', 'Keyword Type', 'Subid', 'Paused', 'Max CPC', 'Keyword Unique ID', 'ACCOUNT', 'CAMPAIGN', 'BRAND', 'BRAND+CATEGORY', 'ADGROUP', 'KEYWORD']
-  LAST_REAL_VALUE_WINS = ['Last Avg CPC', 'Last Avg Pos']
-  INT_VALUES = ['Clicks', 'Impressions', 'ACCOUNT - Clicks', 'CAMPAIGN - Clicks', 'BRAND - Clicks', 'BRAND+CATEGORY - Clicks', 'ADGROUP - Clicks', 'KEYWORD - Clicks']
-  FLOAT_VALUES = ['Avg CPC', 'CTR', 'Est EPC', 'newBid', 'Costs', 'Avg Pos']
+
+  LAST_VALUE_WINS = [
+    'Account ID',
+    'Account Name',
+    'Campaign',
+    'Ad Group',
+    'Keyword',
+    'Keyword Type',
+    'Subid',
+    'Paused',
+    'Max CPC',
+    'Keyword Unique ID',
+    'ACCOUNT',
+    'CAMPAIGN',
+    'BRAND',
+    'BRAND+CATEGORY',
+    'ADGROUP',
+    'KEYWORD'
+  ]
+
+  LAST_REAL_VALUE_WINS = [
+    'Last Avg CPC',
+    'Last Avg Pos'
+  ]
+
+  INT_VALUES = [
+    'Clicks',
+    'Impressions',
+    'ACCOUNT - Clicks',
+    'CAMPAIGN - Clicks',
+    'BRAND - Clicks',
+    'BRAND+CATEGORY - Clicks',
+    'ADGROUP - Clicks',
+    'KEYWORD - Clicks'
+  ]
+
+  FLOAT_VALUES = [
+    'Avg CPC',
+    'CTR',
+    'Est EPC',
+    'newBid',
+    'Costs',
+    'Avg Pos'
+  ]
 
   LINES_PER_FILE = 120000
 
@@ -13,14 +65,14 @@ class Modifier
     @cancellation_factor = cancellation_factor
   end
 
-  def modify(output, input)
-    input = sort(input)
+  def modify(latest_file)
+    latest_file = sort(latest_file)
 
-    input_enumerator = lazy_read(input)
+    latest_file_enumerator = lazy_read(latest_file)
 
     combiner = Combiner.new do |value|
       value[KEYWORD_UNIQUE_ID]
-    end.combine(input_enumerator)
+    end.combine(latest_file_enumerator)
 
     merger = Enumerator.new do |yielder|
       while true
@@ -36,8 +88,8 @@ class Modifier
 
     done = false
     file_index = 0
-    file_name = output.gsub('.txt', '')
-    while not done do
+    file_name = lates_file.gsub('.txt', '')
+    until done do
       CSV.open(file_name + "_#{file_index}.txt", "wb", { :col_sep => "\t", :headers => :first_row, :row_sep => "\r\n" }) do |csv|
         headers_written = false
         line_count = 0
