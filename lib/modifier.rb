@@ -100,9 +100,15 @@ class Modifier
       end
     end
 
+    write_results(latest_file.gsub('.txt', ''))
+
+  end
+
+  private
+
+  def write_results(file_name)
     done = false
     file_index = 0
-    file_name = latest_file.gsub('.txt', '')
     until done do
       CSV.open(file_name + "_#{file_index}.txt", "wb", DEFAUL_WRITE_CSV_OPTIONS ) do |csv|
         merged = merger.next
@@ -122,8 +128,6 @@ class Modifier
       end
     end
   end
-
-  private
 
   def generate_file_enumerator(latest_file)
     file_name = "#{file}.sorted"
