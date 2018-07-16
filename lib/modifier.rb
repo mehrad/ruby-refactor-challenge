@@ -69,9 +69,15 @@ class Modifier
   end
 
   def modify(latest_file)
-    latest_file = sort(latest_file)
 
-    latest_file_enumerator = lazy_read(latest_file)
+    file_name = "#{file}.sorted"
+    content_as_table = parse(latest_file)
+
+    sorted_content = get_sorted_content(content_as_table,'Clicks')
+
+    write(sorted_content, content_as_table.headers, file_name)
+
+    latest_file_enumerator = lazy_read(file_name)
 
     combiner = Combiner.new do |value|
       value[KEYWORD_UNIQUE_ID]
@@ -184,13 +190,8 @@ class Modifier
   end
 
   public
-  def sort(file)
-    output = "#{file}.sorted"
-    content_as_table = parse(file)
-    headers = content_as_table.headers
-    index_of_key = headers.index('Clicks')
-    content = content_as_table.sort_by { |a| -a[index_of_key].to_i }
-    write(content, headers, output)
-    return output
+  def get_sorted_content(content_as_table, key)
+    index_of_key = content_as_table.headers.index(key)
+    return content_as_table.sort_by { |a| -a[index_of_key].to_i }
   end
 end
