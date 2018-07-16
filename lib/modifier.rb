@@ -1,72 +1,13 @@
-class String
-  def from_german_to_f
-    self.gsub(',', '.').to_f
-  end
-end
+require File.expand_path('value_combiners/last_value_wins_combiner',File.dirname(__FILE__))
+require File.expand_path('value_combiners/last_real_value_wins_combiner',File.dirname(__FILE__))
+require File.expand_path('value_combiners/int_value_combiner',File.dirname(__FILE__))
+require File.expand_path('value_combiners/float_value_combiner',File.dirname(__FILE__))
+require File.expand_path('value_combiners/commissions_value_combiner',File.dirname(__FILE__))
 
-class Float
-  def to_german_s
-    self.to_s.gsub('.', ',')
-  end
-end
 
 class Modifier
 
   KEYWORD_UNIQUE_ID = 'Keyword Unique ID'
-
-  LAST_VALUE_WINS = [
-    'Account ID',
-    'Account Name',
-    'Campaign',
-    'Ad Group',
-    'Keyword',
-    'Keyword Type',
-    'Subid',
-    'Paused',
-    'Max CPC',
-    'Keyword Unique ID',
-    'ACCOUNT',
-    'CAMPAIGN',
-    'BRAND',
-    'BRAND+CATEGORY',
-    'ADGROUP',
-    'KEYWORD'
-  ]
-
-  LAST_REAL_VALUE_WINS = [
-    'Last Avg CPC',
-    'Last Avg Pos'
-  ]
-
-  INT_VALUES = [
-    'Clicks',
-    'Impressions',
-    'ACCOUNT - Clicks',
-    'CAMPAIGN - Clicks',
-    'BRAND - Clicks',
-    'BRAND+CATEGORY - Clicks',
-    'ADGROUP - Clicks',
-    'KEYWORD - Clicks'
-  ]
-
-  FLOAT_VALUES = [
-    'Avg CPC',
-    'CTR',
-    'Est EPC',
-    'newBid',
-    'Costs',
-    'Avg Pos'
-  ]
-
-  COMMISSIONS_VALUES = [
-    'Commission Value',
-    'ACCOUNT - Commission Value',
-    'CAMPAIGN - Commission Value',
-    'BRAND - Commission Value',
-    'BRAND+CATEGORY - Commission Value',
-    'ADGROUP - Commission Value',
-    'KEYWORD - Commission Value'
-  ]
 
   NUMBER_OF_COMMISSIONS_VALUE = 'number of commissions'
 
@@ -149,26 +90,21 @@ class Modifier
   end
 
   def combine_values(hash)
-    LAST_VALUE_WINS.each do |key|
-      hash[key] = hash[key].last
-    end
-    LAST_REAL_VALUE_WINS.each do |key|
-      hash[key] = hash[key].select {|v| not (v.nil? or v == 0 or v == '0' or v == '')}.last
-    end
-    INT_VALUES.each do |key|
-      hash[key] = hash[key][0].to_s
-    end
-    FLOAT_VALUES.each do |key|
-      hash[key] = hash[key][0].from_german_to_f.to_german_s
-    end
+
+    hash = LastValueWinsCombiner.combine(hash)
+
+    hash = LastRealValueWinsCombiner.combine(hash)
+
+    hash = IntValueCombiner.combine(hash)
+
+    hash = FloatValueCombiner.combine(hash)
 
     hash[NUMBER_OF_COMMISSIONS_VALUE] = (
                   @cancellation_factor * hash[NUMBER_OF_COMMISSIONS_VALUE][0].from_german_to_f
                 ).to_german_s
 
-    COMMISSIONS_VALUES.each do |key|
-      hash[key] = (@cancellation_factor * @saleamount_factor * hash[key][0].from_german_to_f).to_german_s
-    end
+    hash = CommissionsValueCombiner.combine(hash)
+
     hash
   end
 
