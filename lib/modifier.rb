@@ -60,6 +60,9 @@ class Modifier
 
   LINES_PER_FILE = 120000
 
+  DEFAULT_READ_CSV_OPTIONS = { :col_sep => "\t", :headers => :first_row }
+  DEFAUL_WRITE_CSV_OPTIONS = { :col_sep => "\t", :headers => :first_row, :row_sep => "\r\n" }
+
   def initialize(saleamount_factor, cancellation_factor)
     @saleamount_factor = saleamount_factor
     @cancellation_factor = cancellation_factor
@@ -90,17 +93,13 @@ class Modifier
     file_index = 0
     file_name = lates_file.gsub('.txt', '')
     until done do
-      CSV.open(file_name + "_#{file_index}.txt", "wb", { :col_sep => "\t", :headers => :first_row, :row_sep => "\r\n" }) do |csv|
-        headers_written = false
-        line_count = 0
+      CSV.open(file_name + "_#{file_index}.txt", "wb", DEFAUL_WRITE_CSV_OPTIONS ) do |csv|
+        merged = merger.next
+        csv << merged.keys
+        line_count = 1
         while line_count < LINES_PER_FILE
           begin
             merged = merger.next
-            if not headers_written
-              csv << merged.keys
-              headers_written = true
-              line_count +=1
-            end
             csv << merged
             line_count +=1
           rescue StopIteration
@@ -163,22 +162,20 @@ class Modifier
     result
   end
 
-  DEFAULT_CSV_OPTIONS = { :col_sep => "\t", :headers => :first_row }
-
   def parse(file)
-    CSV.read(file, DEFAULT_CSV_OPTIONS)
+    CSV.read(file, DEFAULT_READ_CSV_OPTIONS)
   end
 
   def lazy_read(file)
     Enumerator.new do |yielder|
-      CSV.foreach(file, DEFAULT_CSV_OPTIONS) do |row|
+      CSV.foreach(file, DEFAULT_READ_CSV_OPTIONS) do |row|
         yielder.yield(row)
       end
     end
   end
 
   def write(content, headers, output)
-    CSV.open(output, "wb", { :col_sep => "\t", :headers => :first_row, :row_sep => "\r\n" }) do |csv|
+    CSV.open(output, "wb", DEFAUL_WRITE_CSV_OPTIONS) do |csv|
       csv << headers
       content.each do |row|
         csv << row
